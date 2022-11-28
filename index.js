@@ -52,7 +52,16 @@ async function run() {
       res.send(result);
     });
 
-   
+    //get the user information
+    app.get("/users/:email", async (req, res) => {
+      const userEmail = req.params.email;
+      const query = {
+        email: userEmail,
+      };
+      const result = await usersCollection.find(query).toArray();
+      //   console.log(result);
+      res.send(result);
+    });
   } finally {
   }
 }
