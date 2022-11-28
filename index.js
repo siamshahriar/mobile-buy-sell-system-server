@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
+const { query } = require("express");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -31,6 +32,9 @@ async function run() {
       .db("mobileBuySell")
       .collection("products");
     const usersCollection = client.db("mobileBuySell").collection("users");
+    const bookingsCollection = client
+      .db("mobileBuySell")
+      .collection("bookings");
 
     //to get the category names
     app.get("/categories", async (req, res) => {
@@ -66,8 +70,23 @@ async function run() {
     //post user information on db
     app.post("/users", async (req, res) => {
       const user = req.body;
-      console.log(user);
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    //post booking items on db
+    app.post("/booking", async (req, res) => {
+      const booking = req.body;
+      const query = {
+        productName: booking.productName,
+      };
+      const checkDuplicate = await bookingsCollection.find(query).toArray();
+
+      if (checkDuplicate.length) {
+        const message = `You already booked ${booking.productName}`;
+        return res.send({ acknowledged: false, message });
+      }
+      const result = await bookingsCollection.insertOne(booking);
       res.send(result);
     });
   } finally {
