@@ -100,6 +100,33 @@ async function run() {
       const result = await bookingsCollection.find(query).toArray();
       res.send(result);
     });
+
+    //add products to db
+    app.post("/products", async (req, res) => {
+      const product = req.body;
+      const query = {
+        productName: product.productName,
+      };
+      const checkDuplicate = await productsCollection.find(query).toArray();
+
+      if (checkDuplicate.length) {
+        const message = `You already booked ${product.productName}`;
+        return res.send({ acknowledged: false, message });
+      }
+      const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
+
+    //find sellers products
+    app.get("/products/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = {
+        email: email,
+      };
+
+      const result = await productsCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
   }
 }
