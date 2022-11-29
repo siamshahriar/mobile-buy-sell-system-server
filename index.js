@@ -135,6 +135,31 @@ async function run() {
       const result = await productsCollection.deleteOne(query);
       res.send(result);
     });
+
+    //advertised data
+    app.get("/advertisements", async (req, res) => {
+      const query = {
+        advertised: true,
+        sold: false,
+      };
+      const result = await productsCollection.find(query).toArray();
+      //   console.log(result);
+      res.send(result);
+    });
+
+    //it will set the product for advertisement
+    app.patch("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+
+      const updatedDoc = {
+        $set: {
+          advertised: true,
+        },
+      };
+      const result = await productsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
   } finally {
   }
 }
