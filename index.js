@@ -160,6 +160,20 @@ async function run() {
       const result = await productsCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
+
+    //it will report the product
+    app.patch("/report/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+
+      const updatedDoc = {
+        $set: {
+          reported: true,
+        },
+      };
+      const result = await productsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
   } finally {
   }
 }
