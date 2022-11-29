@@ -174,6 +174,54 @@ async function run() {
       const result = await productsCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
+
+    //buyer lists, seller lists, reported items
+    app.get("/lists/:id", async (req, res) => {
+      const id = req.params.id;
+      if (id === "buyer") {
+        const query = {
+          role: "buyer",
+        };
+        const result = await usersCollection.find(query).toArray();
+        res.send(result);
+      }
+      if (id === "seller") {
+        const query = {
+          role: "seller",
+        };
+        const result = await usersCollection.find(query).toArray();
+        res.send(result);
+      }
+      if (id === "reports") {
+        const query = {
+          reported: true,
+        };
+        const result = await productsCollection.find(query).toArray();
+        res.send(result);
+      }
+    });
+
+    //it will delete buyer based on id
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //it will verify the sellers
+    app.patch("/sellers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+
+      const updatedDoc = {
+        $set: {
+          sellerVerified: true,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
   } finally {
   }
 }
