@@ -36,6 +36,44 @@ async function run() {
       .db("mobileBuySell")
       .collection("bookings");
 
+    //payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const booking = req.body;
+      const price = booking.price;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    //payment done
+    app.patch("/payments/done", async (req, res) => {
+      const { productID, bookingID } = req.body;
+      const query1 = { _id: ObjectId(bookingID) };
+      const query2 = { _id: ObjectId(productID) };
+
+      const updatedDoc1 = {
+        $set: {
+          paidStatus: true,
+        },
+      };
+      const updatedDoc2 = {
+        $set: {
+          sold: true,
+        },
+      };
+
+      const result1 = await bookingsCollection.updateOne(query1, updatedDoc1);
+      const result2 = await productsCollection.updateOne(query2, updatedDoc2);
+      res.send(result1);
+    });
+
     //to get the category names
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -70,8 +108,17 @@ async function run() {
     //post user information on db
     app.post("/users", async (req, res) => {
       const user = req.body;
-      const result = await usersCollection.insertOne(user);
-      res.send(result);
+
+      const query = {
+        email: user.email,
+      };
+
+      const userResult = await usersCollection.findOne(query);
+
+      if (!userResult) {
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      }
     });
 
     //post booking items on db
@@ -121,7 +168,7 @@ async function run() {
     app.get("/products/:email", async (req, res) => {
       const email = req.params.email;
       const query = {
-        email: email,
+        sellerMail: email,
       };
 
       const result = await productsCollection.find(query).toArray();
@@ -220,6 +267,26 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+
+    //get the bookings item information
+    app.get("/users/:email", async (req, res) => {
+      const userEmail = req.params.email;
+      const query = {
+        email: userEmail,
+      };
+      const result = await usersCollection.find(query).toArray();
+      //   console.log(result);
+      res.send(result);
+    });
+
+    //get each booking information
+    app.get("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+
+      const result = await bookingsCollection.findOne(query);
       res.send(result);
     });
   } finally {
